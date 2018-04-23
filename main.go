@@ -2,6 +2,7 @@ package main
 
 import (
 	"io/ioutil"
+	"log"
 	"net/http"
 
 	"gopkg.in/yaml.v2"
@@ -31,7 +32,12 @@ func init() {
 }
 
 func main() {
+
+	log.Println(model.ExecuteQuery(`{posts(tag:"test1"){alias,title}}`))
+
 	r := chi.NewRouter()
-	r.Get("/", control.Home)
+	r.Get("/tags", control.Tags)
+	r.Get("/tag/{tag_name}", control.TagPosts)
+	r.Get("/posts", control.Posts)
 	http.ListenAndServe(config.Addr, r)
 }

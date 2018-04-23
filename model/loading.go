@@ -13,21 +13,10 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-type (
-	post struct {
-		Path    string `yaml:"-"`
-		Title   string
-		Alias   string
-		Created string
-		Updated string
-		Tags    []string
-	}
-)
-
 var (
 	ROOT   string
 	Posts  sync.Map
-	TagMap map[string][]post
+	TagMap map[string][]Post
 )
 
 func init() {
@@ -45,7 +34,7 @@ func init() {
 
 // 读取Post
 func PostLoading() {
-	TagMap = make(map[string][]post)
+	TagMap = make(map[string][]Post)
 	_load := func(path string) error {
 		bytes, err := ioutil.ReadFile(path)
 		if err != nil {
@@ -56,7 +45,7 @@ func PostLoading() {
 			return errors.New(
 				fmt.Sprintf("Get Info Error: '-->\\n' Not Exist (%v)", path))
 		}
-		var info post
+		var info Post
 		if err = yaml.Unmarshal(bytes[4:index], &info); err != nil {
 			return errors.New(
 				fmt.Sprintf("YAML Unmarshal Error: %v (%v)", err.Error(), path))
@@ -66,13 +55,13 @@ func PostLoading() {
 		_info, ok := Posts.Load(info.Alias)
 		if ok {
 			return errors.New(
-				fmt.Sprintf("Alias Exist: \n%v\n%v", _info.(post).Path, info.Path))
+				fmt.Sprintf("Alias Exist: \n%v\n%v", _info.(Post).Path, info.Path))
 		}
 		Posts.Store(info.Alias, info)
-		// Posts = append(Posts, info)
 
 		for _, v := range info.Tags {
-			TagMap[v] = append(TagMap[v], info)
+			// TODO: 这个倒序插入可能不靠谱
+			TagMap[v] = append([]Post{info}, TagMap[v]...)
 		}
 		// log.Println(string(bytes[index+4:]))
 		return nil
@@ -92,6 +81,4 @@ func PostLoading() {
 			}
 			return nil
 		})
-	// log.Println(TagMap)
-	// log.Println(Posts)
 }
