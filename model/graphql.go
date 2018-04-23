@@ -61,15 +61,13 @@ var Query = graphql.NewObject(graphql.ObjectConfig{
 
 				tagQ, ok := params.Args["tag"].(string)
 				if ok {
-					Posts.Range(func(_, v interface{}) bool {
-						_v := v.(Post)
-						for _, value := range _v.Tags {
-							if value == tagQ {
-								_list = append(_list, _v)
-							}
+					v, ok := TabMap.Load(tagQ)
+					if ok {
+						_v := v.([]Post)
+						for i := 0; i < len(_v); i++ {
+							_list = append(_list, _v[i])
 						}
-						return true
-					})
+					}
 					return _list, nil
 				}
 
@@ -81,7 +79,6 @@ var Query = graphql.NewObject(graphql.ObjectConfig{
 
 var schema, _ = graphql.NewSchema(graphql.SchemaConfig{
 	Query: Query,
-	// Mutation: Mutation,
 })
 
 func ExecuteQuery(query string) *graphql.Result {

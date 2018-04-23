@@ -1,13 +1,13 @@
 package main
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"log"
 	"net/http"
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/loadfield/sfki/control"
 	"github.com/loadfield/sfki/model"
 
 	"github.com/go-chi/chi"
@@ -32,12 +32,17 @@ func init() {
 }
 
 func main() {
-
-	log.Println(model.ExecuteQuery(`{posts(tag:"test1"){alias,title}}`))
-
 	r := chi.NewRouter()
-	r.Get("/tags", control.Tags)
-	r.Get("/tag/{tag_name}", control.TagPosts)
-	r.Get("/posts", control.Posts)
+	r.Post("/graphql", func(w http.ResponseWriter, r *http.Request) {
+		log.Println(model.ExecuteQuery(`{posts(tag:"test1"){alias,title}}`))
+	})
+	r.Get("/graphql", func(w http.ResponseWriter, r *http.Request) {
+		query := r.FormValue("query")
+		json.NewEncoder(w).Encode(model.ExecuteQuery(query))
+		// log.Println()
+	})
+	r.Get("/update", func(w http.ResponseWriter, r *http.Request) {
+		model.PostLoading()
+	})
 	http.ListenAndServe(config.Addr, r)
 }

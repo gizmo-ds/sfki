@@ -16,7 +16,7 @@ import (
 var (
 	ROOT   string
 	Posts  sync.Map
-	TagMap map[string][]Post
+	TabMap sync.Map
 )
 
 func init() {
@@ -34,7 +34,9 @@ func init() {
 
 // 读取Post
 func PostLoading() {
-	TagMap = make(map[string][]Post)
+	Posts = sync.Map{}
+	TabMap = sync.Map{}
+
 	_load := func(path string) error {
 		bytes, err := ioutil.ReadFile(path)
 		if err != nil {
@@ -60,10 +62,15 @@ func PostLoading() {
 		Posts.Store(info.Alias, info)
 
 		for _, v := range info.Tags {
-			// TODO: 这个倒序插入可能不靠谱
-			TagMap[v] = append([]Post{info}, TagMap[v]...)
+			_post_old, ok := TabMap.Load(v)
+			if !ok {
+				_post_old = []Post{info}
+			} else {
+				// TODO: 有可能会boom
+				_post_old = append(_post_old.([]Post), info)
+			}
+			TabMap.Store(v, _post_old)
 		}
-		// log.Println(string(bytes[index+4:]))
 		return nil
 	}
 
