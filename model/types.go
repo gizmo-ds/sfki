@@ -12,7 +12,7 @@ type (
 		Created string   `json:"created"`
 		Updated string   `json:"updated"`
 		Tags    []string `json:"tags"`
-		Context string   `json:"context"`
+		Content string   `json:"content"`
 	}
 )
 
@@ -34,7 +34,7 @@ var postType = graphql.NewObject(graphql.ObjectConfig{
 		"tags": &graphql.Field{
 			Type: graphql.NewList(graphql.String),
 		},
-		"context": &graphql.Field{
+		"content": &graphql.Field{
 			Type: graphql.String,
 		},
 	},

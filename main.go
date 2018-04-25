@@ -39,7 +39,6 @@ func main() {
 	r.Get("/graphql", func(w http.ResponseWriter, r *http.Request) {
 		query := r.FormValue("query")
 		json.NewEncoder(w).Encode(model.ExecuteQuery(query))
-		// log.Println()
 	})
 	r.Get("/update", func(w http.ResponseWriter, r *http.Request) {
 		model.PostLoading()

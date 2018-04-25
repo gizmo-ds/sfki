@@ -53,6 +53,7 @@ func PostLoading() {
 				fmt.Sprintf("YAML Unmarshal Error: %v (%v)", err.Error(), path))
 		}
 		info.Path = path
+		info.Content = string(bytes)
 
 		_info, ok := Posts.Load(info.Alias)
 		if ok {

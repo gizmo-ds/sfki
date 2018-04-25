@@ -2,9 +2,6 @@ package model
 
 import (
 	"fmt"
-	"io/ioutil"
-	"log"
-	"os"
 
 	"github.com/graphql-go/graphql"
 )
@@ -18,9 +15,6 @@ var Query = graphql.NewObject(graphql.ObjectConfig{
 				"alias": &graphql.ArgumentConfig{
 					Type: graphql.String,
 				},
-				"tag": &graphql.ArgumentConfig{
-					Type: graphql.String,
-				},
 			},
 			Resolve: func(params graphql.ResolveParams) (interface{}, error) {
 				_v := Post{}
@@ -30,13 +24,6 @@ var Query = graphql.NewObject(graphql.ObjectConfig{
 					Posts.Range(func(_, v interface{}) bool {
 						_v = v.(Post)
 						if _v.Alias == aliasQ {
-							bytes, err := ioutil.ReadFile(_v.Path)
-							if err != nil {
-								log.New(os.Stdout, "[Warning] graphql.rootQuery.posts",
-									log.LstdFlags).Println(err.Error())
-								return true
-							}
-							_v.Context = string(bytes)
 							return false
 						}
 						_v = Post{}
@@ -52,20 +39,44 @@ var Query = graphql.NewObject(graphql.ObjectConfig{
 		"posts": &graphql.Field{
 			Type: graphql.NewList(postType),
 			Args: graphql.FieldConfigArgument{
+				"offset": &graphql.ArgumentConfig{
+					Type: graphql.Int,
+				},
+				"row": &graphql.ArgumentConfig{
+					Type: graphql.Int,
+				},
 				"tag": &graphql.ArgumentConfig{
 					Type: graphql.String,
 				},
 			},
 			Resolve: func(params graphql.ResolveParams) (interface{}, error) {
 				_list := []Post{}
+				offset, ok := params.Args["offset"].(int)
+				if !ok || offset < 0 {
+					offset = 0
+				}
+				row, ok := params.Args["row"].(int)
+				if !ok || row < 0 {
+					row = 0
+				}
 
 				tagQ, ok := params.Args["tag"].(string)
 				if ok {
 					v, ok := TabMap.Load(tagQ)
 					if ok {
 						_v := v.([]Post)
-						for i := 0; i < len(_v); i++ {
+						_h := 0
+						for i := offset; i < func() int {
+							if offset > 0 {
+								return len(_v) - offset + 1
+							}
+							return len(_v) - offset
+						}(); i++ {
+							if _h >= row && row != 0 {
+								break
+							}
 							_list = append(_list, _v[i])
+							_h++
 						}
 					}
 					return _list, nil
