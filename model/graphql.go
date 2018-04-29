@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/graphql-go/graphql"
 )
@@ -17,20 +18,13 @@ var Query = graphql.NewObject(graphql.ObjectConfig{
 				},
 			},
 			Resolve: func(params graphql.ResolveParams) (interface{}, error) {
-				_v := Post{}
-
 				aliasQ, ok := params.Args["alias"].(string)
 				if ok {
-					Posts.Range(func(_, v interface{}) bool {
-						_v = v.(Post)
-						if _v.Alias == aliasQ {
-							return false
+					_post := Post_.posts
+					for _, v := range _post {
+						if v.Alias == aliasQ {
+							return v, nil
 						}
-						_v = Post{}
-						return true
-					})
-					if _v.Alias != "" {
-						return _v, nil
 					}
 				}
 				return nil, nil
@@ -62,21 +56,31 @@ var Query = graphql.NewObject(graphql.ObjectConfig{
 
 				tagQ, ok := params.Args["tag"].(string)
 				if ok {
-					v, ok := TabMap.Load(tagQ)
-					if ok {
-						_v := v.([]Post)
-						_h := 0
-						for i := offset; i < func() int {
-							if offset > 0 {
-								return len(_v) - offset + 1
-							}
-							return len(_v) - offset
-						}(); i++ {
-							if _h >= row && row != 0 {
-								break
-							}
-							_list = append(_list, _v[i])
+					_posts := Post_.posts
+					_h := 0
+					for i := offset; i < func() int {
+						if offset > 0 {
+							return len(_posts) - offset + 1
+						}
+						return len(_posts) - offset
+					}(); i++ {
+						if _h >= row && row != 0 {
+							break
+						}
+						// 处理Content
+						var _post = _posts[i]
+						_post.Content = Content2Description(_post.Content, _post.Alias)
+
+						if tagQ == "" {
+							_list = append(_list, _post)
 							_h++
+						} else {
+							for _, tag := range _post.Tags {
+								if tagQ == tag {
+									_list = append(_list, _post)
+									_h++
+								}
+							}
 						}
 					}
 					return _list, nil
@@ -101,4 +105,19 @@ func ExecuteQuery(query string) *graphql.Result {
 		fmt.Printf("wrong result, unexpected errors: %v", result.Errors)
 	}
 	return result
+}
+
+func Content2Description(content, alias string) string {
+	des := ""
+	sp := strings.Split(content, "\n")
+	for i := 0; i < len(sp); i++ {
+		if strings.Index(sp[i], "```") == -1 &&
+			strings.Index(sp[i], `<!-- More -->`) == -1 {
+			des += sp[i] + "\n"
+		} else {
+			des += `<!-- More -->`
+			break
+		}
+	}
+	return des
 }

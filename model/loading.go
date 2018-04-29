@@ -14,8 +14,11 @@ import (
 )
 
 var (
-	ROOT   string
-	Posts  sync.Map
+	ROOT  string
+	Post_ struct {
+		sync.Mutex
+		posts []Post
+	}
 	TabMap sync.Map
 )
 
@@ -34,7 +37,11 @@ func init() {
 
 // 读取Post
 func PostLoading() {
-	Posts = sync.Map{}
+	Post_.Lock()
+	defer func() {
+		Post_.Unlock()
+	}()
+	Post_.posts = []Post{}
 	TabMap = sync.Map{}
 
 	_load := func(path string) error {
@@ -54,13 +61,7 @@ func PostLoading() {
 		}
 		info.Path = path
 		info.Content = string(bytes)
-
-		_info, ok := Posts.Load(info.Alias)
-		if ok {
-			return errors.New(
-				fmt.Sprintf("Alias Exist: \n%v\n%v", _info.(Post).Path, info.Path))
-		}
-		Posts.Store(info.Alias, info)
+		Post_.posts = append(Post_.posts, info)
 
 		for _, v := range info.Tags {
 			_post_old, ok := TabMap.Load(v)
