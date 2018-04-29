@@ -19,7 +19,7 @@ var (
 		sync.Mutex
 		posts []Post
 	}
-	TabMap sync.Map
+	TagMap sync.Map
 )
 
 func init() {
@@ -42,7 +42,7 @@ func PostLoading() {
 		Post_.Unlock()
 	}()
 	Post_.posts = []Post{}
-	TabMap = sync.Map{}
+	TagMap = sync.Map{}
 
 	_load := func(path string) error {
 		bytes, err := ioutil.ReadFile(path)
@@ -64,14 +64,14 @@ func PostLoading() {
 		Post_.posts = append(Post_.posts, info)
 
 		for _, v := range info.Tags {
-			_post_old, ok := TabMap.Load(v)
+			_post_old, ok := TagMap.Load(v)
 			if !ok {
 				_post_old = []Post{info}
 			} else {
 				// TODO: 有可能会boom
 				_post_old = append(_post_old.([]Post), info)
 			}
-			TabMap.Store(v, _post_old)
+			TagMap.Store(v, _post_old)
 		}
 		return nil
 	}
