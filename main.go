@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"io/ioutil"
-	"log"
 	"net/http"
 
 	"gopkg.in/yaml.v2"
@@ -34,14 +33,13 @@ func init() {
 func main() {
 	r := chi.NewRouter()
 	r.Post("/graphql", func(w http.ResponseWriter, r *http.Request) {
-		log.Println(model.ExecuteQuery(`{posts(tag:"test1"){alias,title}}`))
-	})
-	r.Get("/graphql", func(w http.ResponseWriter, r *http.Request) {
-		query := r.FormValue("query")
+		r.ParseForm()
+		query := r.PostFormValue("query")
 		json.NewEncoder(w).Encode(model.ExecuteQuery(query))
 	})
 	r.Get("/update", func(w http.ResponseWriter, r *http.Request) {
 		model.PostLoading()
+		model.LinkLoading()
 	})
 	http.ListenAndServe(config.Addr, r)
 }

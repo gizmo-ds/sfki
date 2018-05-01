@@ -19,6 +19,10 @@ var (
 		sync.Mutex
 		posts []Post
 	}
+	Link_ struct {
+		sync.Mutex
+		links []Link
+	}
 	TagMap sync.Map
 )
 
@@ -32,10 +36,25 @@ func init() {
 		}
 	}
 
+	LinkLoading()
 	PostLoading()
 }
 
-// 读取Post
+func LinkLoading() {
+	Link_.Lock()
+	defer func() {
+		Link_.Unlock()
+	}()
+	Link_.links = []Link{}
+
+	bytes, err := ioutil.ReadFile(filepath.Join(ROOT, "links.yaml"))
+	if err == nil {
+		if err = yaml.Unmarshal(bytes, &Link_.links); err != nil {
+			panic(err)
+		}
+	}
+}
+
 func PostLoading() {
 	Post_.Lock()
 	defer func() {

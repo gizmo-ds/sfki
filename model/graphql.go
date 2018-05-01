@@ -31,7 +31,7 @@ var Query = graphql.NewObject(graphql.ObjectConfig{
 			},
 		},
 		"posts": &graphql.Field{
-			Type: graphql.NewList(postType),
+			Type: postsType,
 			Args: graphql.FieldConfigArgument{
 				"offset": &graphql.ArgumentConfig{
 					Type: graphql.Int,
@@ -45,6 +45,8 @@ var Query = graphql.NewObject(graphql.ObjectConfig{
 			},
 			Resolve: func(params graphql.ResolveParams) (interface{}, error) {
 				_list := []Post{}
+				_posts := Post_.posts
+
 				offset, ok := params.Args["offset"].(int)
 				if !ok || offset < 0 {
 					offset = 0
@@ -56,14 +58,8 @@ var Query = graphql.NewObject(graphql.ObjectConfig{
 
 				tagQ, ok := params.Args["tag"].(string)
 				if ok {
-					_posts := Post_.posts
 					_h := 0
-					for i := offset; i < func() int {
-						if offset > 0 {
-							return len(_posts) - offset + 1
-						}
-						return len(_posts) - offset
-					}(); i++ {
+					for i := (offset); i < len(_posts); i++ {
 						if _h >= row && row != 0 {
 							break
 						}
@@ -83,10 +79,39 @@ var Query = graphql.NewObject(graphql.ObjectConfig{
 							}
 						}
 					}
-					return _list, nil
 				}
-
-				return []Post{}, nil
+				return struct {
+					Max  int    `json:"max"`
+					List []Post `json:"list"`
+				}{len(_posts), _list}, nil
+			},
+		},
+		"tags": &graphql.Field{
+			Type: graphql.NewList(tagType),
+			Args: graphql.FieldConfigArgument{},
+			Resolve: func(params graphql.ResolveParams) (interface{}, error) {
+				type t struct {
+					Tag   string `json:"tag"`
+					Posts []Post `json:"posts"`
+				}
+				var tags []t
+				TagMap.Range(func(k, v interface{}) bool {
+					_key := k.(string)
+					tags = append(tags, t{
+						Tag:   _key,
+						Posts: v.([]Post),
+					})
+					return true
+				})
+				// log.Println(tags)
+				return tags, nil
+			},
+		},
+		"links": &graphql.Field{
+			Type: graphql.NewList(linkType),
+			Args: graphql.FieldConfigArgument{},
+			Resolve: func(params graphql.ResolveParams) (interface{}, error) {
+				return Link_.links, nil
 			},
 		},
 	},
