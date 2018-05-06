@@ -4,8 +4,7 @@ FROM golang:alpine AS builder
 RUN mkdir -p /go/src/github.com/loadfield/sfki
 WORKDIR /go/src/github.com/loadfield/sfki
 COPY . /go/src/github.com/loadfield/sfki
-RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositories
-RUN apk update
+# RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositories
 RUN apk add --no-cache git
 RUN go get -v gopkg.in/yaml.v2
 RUN go get -v github.com/go-chi/chi

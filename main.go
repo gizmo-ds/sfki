@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"path/filepath"
 
 	"gopkg.in/yaml.v2"
 
@@ -16,12 +17,13 @@ import (
 
 var (
 	config struct {
-		Addr string
+		Addr      string
+		AccessKey string
 	}
 )
 
 func init() {
-	bytes, err := ioutil.ReadFile(model.ROOT + "/config.yaml")
+	bytes, err := ioutil.ReadFile(filepath.Join(model.ROOT, "config/config.yaml"))
 	if err != nil {
 		panic(err)
 	}
@@ -37,9 +39,19 @@ func main() {
 		query := r.PostFormValue("query")
 		json.NewEncoder(w).Encode(model.ExecuteQuery(query))
 	})
-	r.Get("/update", func(w http.ResponseWriter, r *http.Request) {
+	r.Post("/update", func(w http.ResponseWriter, r *http.Request) {
+		// curl -i -d "access_key=2333" http://localhost:3000/update
+		if r.FormValue("access_key") != config.AccessKey {
+			w.WriteHeader(401)
+			return
+		}
 		model.PostLoading()
 		model.LinkLoading()
+		model.AboutLoading()
+	})
+	r.Get("/about", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(200)
+		json.NewEncoder(w).Encode(model.About)
 	})
 	http.ListenAndServe(config.Addr, r)
 }

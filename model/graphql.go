@@ -107,11 +107,17 @@ var Query = graphql.NewObject(graphql.ObjectConfig{
 				return tags, nil
 			},
 		},
-		"links": &graphql.Field{
-			Type: graphql.NewList(linkType),
+		"link": &graphql.Field{
+			Type: linksType,
 			Args: graphql.FieldConfigArgument{},
 			Resolve: func(params graphql.ResolveParams) (interface{}, error) {
-				return Link_.links, nil
+				return struct {
+					Content string `json:"content"`
+					Links   []Link `json:"links"`
+				}{
+					Link_.Content,
+					Link_.links,
+				}, nil
 			},
 		},
 	},

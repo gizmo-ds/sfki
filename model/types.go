@@ -70,7 +70,7 @@ var postsType = graphql.NewObject(graphql.ObjectConfig{
 })
 
 var linkType = graphql.NewObject(graphql.ObjectConfig{
-	Name: "post",
+	Name: "link",
 	Fields: graphql.Fields{
 		"title": &graphql.Field{
 			Type: graphql.String,
@@ -80,6 +80,18 @@ var linkType = graphql.NewObject(graphql.ObjectConfig{
 		},
 		"description": &graphql.Field{
 			Type: graphql.String,
+		},
+	},
+})
+
+var linksType = graphql.NewObject(graphql.ObjectConfig{
+	Name: "links",
+	Fields: graphql.Fields{
+		"content": &graphql.Field{
+			Type: graphql.String,
+		},
+		"links": &graphql.Field{
+			Type: graphql.NewList(linkType),
 		},
 	},
 })

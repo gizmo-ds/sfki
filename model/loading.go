@@ -21,7 +21,12 @@ var (
 	}
 	Link_ struct {
 		sync.Mutex
-		links []Link
+		Content string
+		links   []Link
+	}
+	About struct {
+		sync.Mutex
+		Content string `json:"content"`
 	}
 	TagMap sync.Map
 )
@@ -36,8 +41,20 @@ func init() {
 		}
 	}
 
+	AboutLoading()
 	LinkLoading()
 	PostLoading()
+}
+
+func AboutLoading() {
+	About.Lock()
+	defer func() {
+		About.Unlock()
+	}()
+	bytes, err := ioutil.ReadFile(filepath.Join(ROOT, "config/about.md"))
+	if err == nil {
+		About.Content = string(bytes)
+	}
 }
 
 func LinkLoading() {
@@ -47,11 +64,15 @@ func LinkLoading() {
 	}()
 	Link_.links = []Link{}
 
-	bytes, err := ioutil.ReadFile(filepath.Join(ROOT, "links.yaml"))
+	bytes, err := ioutil.ReadFile(filepath.Join(ROOT, "config/links.yaml"))
 	if err == nil {
 		if err = yaml.Unmarshal(bytes, &Link_.links); err != nil {
 			panic(err)
 		}
+	}
+	bytes, err = ioutil.ReadFile(filepath.Join(ROOT, "config/links.md"))
+	if err == nil {
+		Link_.Content = string(bytes)
 	}
 }
 
