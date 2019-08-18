@@ -8,11 +8,9 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/loadfield/sfki/model"
+	"sfki/model"
 
 	"github.com/go-chi/chi"
-
-	_ "github.com/loadfield/sfki/model"
 )
 
 var (
