@@ -1,16 +1,14 @@
 package main
 
 import (
-	"encoding/json"
 	"io/ioutil"
-	"net/http"
 	"path/filepath"
 
 	"gopkg.in/yaml.v2"
 
 	"sfki/model"
 
-	"github.com/go-chi/chi"
+	"github.com/labstack/echo"
 )
 
 var (
@@ -31,25 +29,31 @@ func init() {
 }
 
 func main() {
-	r := chi.NewRouter()
-	r.Post("/graphql", func(w http.ResponseWriter, r *http.Request) {
-		r.ParseForm()
-		query := r.PostFormValue("query")
-		json.NewEncoder(w).Encode(model.ExecuteQuery(query))
+	e := echo.New()
+
+	e.POST("/graphql", func(c echo.Context) error {
+		var form struct {
+			Query string `json:'query'`
+		}
+		if err := c.Bind(&form); err != nil {
+			return err
+		}
+		c.JSON(200, model.ExecuteQuery(form.Query))
+		return nil
 	})
-	r.Post("/update", func(w http.ResponseWriter, r *http.Request) {
-		// curl -i -d "access_key=2333" http://localhost:3000/update
-		if r.FormValue("access_key") != config.AccessKey {
-			w.WriteHeader(401)
-			return
+	e.POST("/update", func(c echo.Context) error {
+		if c.FormValue("access_key") != config.AccessKey {
+			c.String(401, "Not Authorized")
+			return nil
 		}
 		model.PostLoading()
 		model.LinkLoading()
 		model.AboutLoading()
+		return nil
 	})
-	r.Get("/about", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(200)
-		json.NewEncoder(w).Encode(model.About)
+	e.GET("/about", func(c echo.Context) error {
+		c.JSON(200, model.About)
+		return nil
 	})
-	http.ListenAndServe(config.Addr, r)
+	e.Logger.Fatal(e.Start(config.Addr))
 }
